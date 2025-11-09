@@ -1,20 +1,35 @@
+import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemeProvider } from './src/context/ThemeContext';
+import { AuthProvider } from './src/context/AuthContext';
+import { PrivacyProvider } from './src/context/PrivacyContext';
+import RootNavigator from './src/navigation';
+import { initI18n } from './src/i18n';
+import './src/i18n';
+import './src/polyfills/webrtc';
 
 export default function App() {
+  const [i18nInitialized, setI18nInitialized] = useState(false);
+
+  useEffect(() => {
+    initI18n().then(() => setI18nInitialized(true));
+  }, []);
+
+  if (!i18nInitialized) {
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <PrivacyProvider>
+            <RootNavigator />
+            <StatusBar style="auto" />
+          </PrivacyProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
