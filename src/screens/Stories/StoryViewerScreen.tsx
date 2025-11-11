@@ -66,13 +66,19 @@ export default function StoryViewerScreen({ route, navigation }: any) {
     const load = async () => {
       try {
         if (storyId) {
-          const s = await storyService.get(storyId);
-          const mapped: Story = s.media.type === 'text'
-            ? { id: s.id, type: 'text', content: s.media.text || '', backgroundColor: s.media.backgroundColor || '#000', timestamp: formatRelative(s.createdAt) }
-            : { id: s.id, type: 'image', content: s.media.url, timestamp: formatRelative(s.createdAt) };
+          // TODO: Connect to Firebase backend
+          console.log('TODO: Fetch story from Firebase:', storyId);
+          
+          // Mock: Create empty story to prevent errors
+          const mapped: Story = {
+            id: storyId,
+            type: 'text',
+            content: 'Story content will load from Firebase',
+            backgroundColor: '#667eea',
+            timestamp: 'Just now'
+          };
           if (!active) return;
           setStories([mapped]);
-          storyService.markViewed(s.id).catch(()=>{});
         }
       } catch (e) {
         // silent

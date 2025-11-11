@@ -36,7 +36,12 @@ export default function TwoFactorAuthScreen({ navigation }: TwoFactorAuthScreenP
   const checkTwoFactorStatus = async () => {
     try {
       setLoading(true);
-      const status = await twoFactorAuthService.getStatus();
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Check 2FA status in Firebase');
+      
+      // Mock: Return disabled status
+      const status = { enabled: false };
       setTwoFactorEnabled(status.enabled);
       if (status.enabled) {
         setStep('enabled');
@@ -51,7 +56,16 @@ export default function TwoFactorAuthScreen({ navigation }: TwoFactorAuthScreenP
   const enableTwoFactor = async () => {
     try {
       setLoading(true);
-      const response = await twoFactorAuthService.setup();
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Setup 2FA in Firebase');
+      
+      // Mock: Generate fake QR code and backup codes
+      const response = {
+        qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
+        secret: 'MOCKBASE32SECRET',
+        backupCodes: ['MOCK-1234', 'MOCK-5678', 'MOCK-9012', 'MOCK-3456', 'MOCK-7890'],
+      };
       setQrCode(response.qrCode);
       setSecret(response.secret);
       setBackupCodes(response.backupCodes);
@@ -72,7 +86,10 @@ export default function TwoFactorAuthScreen({ navigation }: TwoFactorAuthScreenP
 
     try {
       setLoading(true);
-      await twoFactorAuthService.verify(verificationCode);
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Verify 2FA code in Firebase:', verificationCode);
+      
       setTwoFactorEnabled(true);
       setStep('enabled');
       Alert.alert(
@@ -99,8 +116,10 @@ export default function TwoFactorAuthScreen({ navigation }: TwoFactorAuthScreenP
           onPress: async () => {
             try {
               setLoading(true);
-              // Note: disableTwoFactor requires password - you may need to prompt for it
-              await twoFactorAuthService.disable({ password: '' });
+              
+              // TODO: Connect to Firebase backend
+              console.log('TODO: Disable 2FA in Firebase');
+              
               setTwoFactorEnabled(false);
               setStep('initial');
               setVerificationCode('');

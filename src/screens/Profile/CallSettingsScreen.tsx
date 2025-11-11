@@ -42,7 +42,18 @@ export default function CallSettingsScreen({ navigation }: CallSettingsScreenPro
   const loadSettings = async () => {
     try {
       setLoading(true);
-      const data = await callService.getCallSettings();
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Fetch call settings from Firebase');
+      
+      // Mock: Use default settings matching CallSettings interface
+      const data: CallSettings = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        videoBitrate: 2000,
+        preferredResolution: '720p',
+      };
       setSettings(data);
     } catch (error) {
       console.error('Failed to load call settings:', error);
@@ -57,7 +68,9 @@ export default function CallSettingsScreen({ navigation }: CallSettingsScreenPro
 
     try {
       setSaving(true);
-      await callService.updateCallSettings({ [key]: value });
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Update call settings in Firebase:', { [key]: value });
       
       // Notify other devices via SignalR
       socketService.send('settings:updated', {

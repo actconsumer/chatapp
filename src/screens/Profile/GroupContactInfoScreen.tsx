@@ -110,8 +110,24 @@ export default function GroupContactInfoScreen({ navigation, route, initialSumma
     }
 
     try {
-      const refreshed = await chatService.get(chatId);
-      assignSummary(refreshed);
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Refresh group summary from Firebase:', chatId);
+      
+      // Mock: Keep existing summary or create basic one
+      if (!groupSummary) {
+        const refreshed: ChatSummary = {
+          id: chatId,
+          type: 'group',
+          name: fallbackName || 'Group',
+          avatar: fallbackAvatar,
+          participants: [],
+          lastMessage: null,
+          unreadCount: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any;
+        assignSummary(refreshed);
+      }
       setErrorMessage(null);
     } catch (error: any) {
       console.error('GroupContactInfoScreen refresh error:', error);

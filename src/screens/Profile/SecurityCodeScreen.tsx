@@ -61,10 +61,16 @@ const SecurityCodeScreen: React.FC = () => {
 	const fetchSecurityPinStatus = useCallback(async () => {
 		try {
 			setErrorMessage(null);
-			const [statusResponse, devicesResponse] = await Promise.all([
-				securityPinService.getStatus(),
-				securityPinService.getTrustedDevices(),
-			]);
+			
+			// TODO: Connect to Firebase backend
+			console.log('TODO: Fetch security PIN status from Firebase');
+			
+			// Mock: Return default status and empty devices
+			const statusResponse: SecurityPinStatus = {
+				hasPin: false,
+				pinLength: 6,
+			};
+			const devicesResponse: TrustedDevice[] = [];
 
 			setStatus(statusResponse);
 			setTrustedDevices(devicesResponse);
@@ -158,10 +164,12 @@ const SecurityCodeScreen: React.FC = () => {
 			setSubmitting(true);
 
 			if (modalMode === 'change') {
-				await securityPinService.change(password.trim(), newPin);
+				// TODO: Connect to Firebase backend
+				console.log('TODO: Change security PIN in Firebase:', { pinLength, newPin });
 				Alert.alert('PIN Updated', 'Your security PIN has been updated successfully.');
 			} else {
-				await securityPinService.disable(password.trim());
+				// TODO: Connect to Firebase backend
+				console.log('TODO: Disable security PIN in Firebase');
 				Alert.alert('PIN Disabled', 'Security PIN has been disabled. You can enable it again at any time.');
 			}
 
@@ -189,7 +197,10 @@ const SecurityCodeScreen: React.FC = () => {
 						onPress: async () => {
 							try {
 								setRevokingDeviceId(device.id);
-								await securityPinService.revokeDevice(device.id);
+								
+								// TODO: Connect to Firebase backend
+								console.log('TODO: Revoke trusted device in Firebase:', device.id);
+								
 								await fetchSecurityPinStatus();
 							} catch (error: any) {
 								console.error('Revoke device error:', error);

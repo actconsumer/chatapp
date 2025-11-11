@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,16 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  Animated,
+  Vibration,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { SIZES } from '../../utils/constants';
 import { LinearGradient } from 'expo-linear-gradient';
-import { securityPinService } from '../../services';
+import * as Haptics from 'expo-haptics';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 interface SetupSecurityPinScreenProps {
   navigation: any;
@@ -24,13 +27,65 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
   const { theme } = useTheme();
   const { user, refreshUser } = useAuth();
   
-  const [step, setStep] = useState<'info' | 'choose-length' | 'enter-pin' | 'confirm-pin'>('info');
+  const [step, setStep] = useState<'info' | 'choose-length' | 'biometric' | 'enter-pin' | 'confirm-pin'>('info');
   const [pinLength, setPinLength] = useState<4 | 6>(6);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [loading, setLoading] = useState(false);
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricType, setBiometricType] = useState<string>('');
+  const [enableBiometric, setEnableBiometric] = useState(true);
+  const [shakeAnimation] = useState(new Animated.Value(0));
+  const [scaleAnimation] = useState(new Animated.Value(1));
+
+  useEffect(() => {
+    checkBiometricAvailability();
+  }, []);
+
+  const checkBiometricAvailability = async () => {
+    try {
+      const compatible = await LocalAuthentication.hasHardwareAsync();
+      const enrolled = await LocalAuthentication.isEnrolledAsync();
+      const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+      
+      if (compatible && enrolled) {
+        setBiometricAvailable(true);
+        const type = types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)
+          ? 'Face ID'
+          : types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)
+          ? 'Fingerprint'
+          : 'Biometric';
+        setBiometricType(type);
+      }
+    } catch (error) {
+      console.error('Biometric check error:', error);
+    }
+  };
+
+  const triggerHaptic = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const triggerSuccessHaptic = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+  };
+
+  const triggerErrorHaptic = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+  };
+
+  const shakeError = () => {
+    triggerErrorHaptic();
+    Animated.sequence([
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnimation, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
   const handlePinPress = (digit: string) => {
+    triggerHaptic();
     if (step === 'enter-pin') {
       if (pin.length < pinLength) {
         setPin(pin + digit);
@@ -58,6 +113,7 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
 
   const verifyAndSetup = async (finalPin: string) => {
     if (pin !== finalPin.slice(0, -1)) {
+      shakeError();
       Alert.alert('Error', 'PINs do not match. Please try again.');
       setPin('');
       setConfirmPin('');
@@ -67,21 +123,42 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
 
     try {
       setLoading(true);
-      await securityPinService.setup(pin);
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Setup security PIN in Firebase:', {
+        pin: pin,
+        pinLength: pinLength,
+        biometricEnabled: enableBiometric && biometricAvailable,
+      });
+      
+      // Mock: Simulate delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Update user state to mark security PIN as configured
+      // This will trigger a re-render and navigate to Main automatically
       await refreshUser();
       
+      triggerSuccessHaptic();
+      
+      // Show success message
       Alert.alert(
-        'Success',
-        'Your account is now fully secured!',
+        'Success! 🎉',
+        enableBiometric && biometricAvailable
+          ? `Your account is now secured with a ${pinLength}-digit PIN and ${biometricType}! You will be taken to your chats.`
+          : 'Your account is now fully secured! You will be taken to your chats.',
         [
           {
-            text: 'Get Started',
-            onPress: () => navigation.replace('Main'),
+            text: 'Start Chatting',
+            onPress: () => {
+              // Navigation will automatically switch to Main (Chats screen) after refreshUser()
+              // because requiresSecuritySetup will become false
+            },
           },
         ]
       );
     } catch (error) {
       console.error('Security PIN setup error:', error);
+      triggerErrorHaptic();
       Alert.alert('Error', 'Failed to setup security PIN. Please try again.');
       setPin('');
       setConfirmPin('');
@@ -186,7 +263,10 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
             styles.lengthOption,
             { backgroundColor: theme.surface, borderColor: pinLength === 4 ? theme.primary : theme.border },
           ]}
-          onPress={() => setPinLength(4)}
+          onPress={() => {
+            triggerHaptic();
+            setPinLength(4);
+          }}
         >
           <View style={[styles.lengthIcon, { backgroundColor: theme.primary + '20' }]}>
             <Text style={[styles.lengthNumber, { color: theme.primary }]}>4</Text>
@@ -205,7 +285,10 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
             styles.lengthOption,
             { backgroundColor: theme.surface, borderColor: pinLength === 6 ? theme.primary : theme.border },
           ]}
-          onPress={() => setPinLength(6)}
+          onPress={() => {
+            triggerHaptic();
+            setPinLength(6);
+          }}
         >
           <View style={[styles.lengthIcon, { backgroundColor: theme.primary + '20' }]}>
             <Text style={[styles.lengthNumber, { color: theme.primary }]}>6</Text>
@@ -222,7 +305,10 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
 
       <TouchableOpacity
         style={styles.continueButton}
-        onPress={() => setStep('enter-pin')}
+        onPress={() => {
+          triggerHaptic();
+          setStep(biometricAvailable ? 'biometric' : 'enter-pin');
+        }}
       >
         <LinearGradient
           colors={theme.gradient}
@@ -236,27 +322,137 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
     </View>
   );
 
+  const renderBiometricStep = () => (
+    <View style={styles.content}>
+      <View style={[styles.iconCircle, { backgroundColor: theme.surface }]}>
+        <LinearGradient
+          colors={theme.gradient}
+          style={styles.iconGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <Ionicons 
+            name={biometricType === 'Face ID' ? 'scan' : 'finger-print'} 
+            size={64} 
+            color="#fff" 
+          />
+        </LinearGradient>
+      </View>
+
+      <Text style={[styles.title, { color: theme.text }]}>
+        Enable {biometricType}?
+      </Text>
+      <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
+        Use {biometricType} for quick and secure access to your account
+      </Text>
+
+      <View style={styles.featureList}>
+        <View style={[styles.featureItem, { backgroundColor: theme.surface }]}>
+          <View style={[styles.featureIcon, { backgroundColor: theme.primary + '20' }]}>
+            <Ionicons name="flash" size={24} color={theme.primary} />
+          </View>
+          <View style={styles.featureText}>
+            <Text style={[styles.featureTitle, { color: theme.text }]}>
+              Fast Login
+            </Text>
+            <Text style={[styles.featureDescription, { color: theme.textSecondary }]}>
+              Sign in instantly without entering your PIN
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.featureItem, { backgroundColor: theme.surface }]}>
+          <View style={[styles.featureIcon, { backgroundColor: theme.primary + '20' }]}>
+            <Ionicons name="shield-checkmark" size={24} color={theme.primary} />
+          </View>
+          <View style={styles.featureText}>
+            <Text style={[styles.featureTitle, { color: theme.text }]}>
+              Extra Security
+            </Text>
+            <Text style={[styles.featureDescription, { color: theme.textSecondary }]}>
+              Your {biometricType} stays on your device
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.featureItem, { backgroundColor: theme.surface }]}>
+          <View style={[styles.featureIcon, { backgroundColor: theme.primary + '20' }]}>
+            <Ionicons name="key" size={24} color={theme.primary} />
+          </View>
+          <View style={styles.featureText}>
+            <Text style={[styles.featureTitle, { color: theme.text }]}>
+              PIN Backup
+            </Text>
+            <Text style={[styles.featureDescription, { color: theme.textSecondary }]}>
+              You can always use your PIN instead
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.continueButton}
+        onPress={() => {
+          triggerSuccessHaptic();
+          setEnableBiometric(true);
+          setStep('enter-pin');
+        }}
+      >
+        <LinearGradient
+          colors={theme.gradient}
+          style={styles.gradientButton}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+        >
+          <Text style={styles.continueButtonText}>Enable {biometricType}</Text>
+        </LinearGradient>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.skipButton}
+        onPress={() => {
+          triggerHaptic();
+          setEnableBiometric(false);
+          setStep('enter-pin');
+        }}
+      >
+        <Text style={[styles.skipButtonText, { color: theme.textSecondary }]}>
+          Skip for Now
+        </Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const renderPinInput = (currentPin: string, isConfirm: boolean = false) => (
     <View style={styles.pinInputContainer}>
       <Text style={[styles.pinTitle, { color: theme.text }]}>
-        {isConfirm ? 'Confirm Your PIN' : 'Enter Your PIN'}
+        {isConfirm ? 'Confirm Your PIN' : 'Create Your PIN'}
       </Text>
       <Text style={[styles.pinSubtitle, { color: theme.textSecondary }]}>
         {isConfirm ? 'Re-enter your PIN to confirm' : `Create a ${pinLength}-digit PIN`}
       </Text>
 
-      <View style={styles.pinDots}>
+      <Animated.View 
+        style={[
+          styles.pinDots,
+          { transform: [{ translateX: shakeAnimation }] }
+        ]}
+      >
         {Array.from({ length: pinLength }).map((_, index) => (
-          <View
+          <Animated.View
             key={index}
             style={[
               styles.pinDot,
               { borderColor: theme.border },
-              index < currentPin.length && { backgroundColor: theme.primary, borderColor: theme.primary },
+              index < currentPin.length && { 
+                backgroundColor: theme.primary, 
+                borderColor: theme.primary,
+                transform: [{ scale: scaleAnimation }]
+              },
             ]}
           />
         ))}
-      </View>
+      </Animated.View>
 
       <View style={styles.keypad}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
@@ -264,6 +460,7 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
             key={num}
             style={[styles.keypadButton, { backgroundColor: theme.surface }]}
             onPress={() => handlePinPress(num.toString())}
+            activeOpacity={0.7}
           >
             <Text style={[styles.keypadText, { color: theme.text }]}>{num}</Text>
           </TouchableOpacity>
@@ -272,16 +469,33 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
         <TouchableOpacity
           style={[styles.keypadButton, { backgroundColor: theme.surface }]}
           onPress={() => handlePinPress('0')}
+          activeOpacity={0.7}
         >
           <Text style={[styles.keypadText, { color: theme.text }]}>0</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.keypadButton, { backgroundColor: theme.surface }]}
           onPress={handleBackspace}
+          activeOpacity={0.7}
         >
           <Ionicons name="backspace-outline" size={28} color={theme.text} />
         </TouchableOpacity>
       </View>
+
+      {isConfirm && (
+        <TouchableOpacity
+          style={styles.goBackButton}
+          onPress={() => {
+            triggerHaptic();
+            setConfirmPin('');
+            setStep('enter-pin');
+          }}
+        >
+          <Text style={[styles.goBackButtonText, { color: theme.textSecondary }]}>
+            <Ionicons name="arrow-back" size={16} /> Go Back
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -290,11 +504,14 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
       <View style={[styles.header, { backgroundColor: theme.background }]}>
         <TouchableOpacity 
           onPress={() => {
+            triggerHaptic();
             if (step === 'confirm-pin') {
               setConfirmPin('');
               setStep('enter-pin');
             } else if (step === 'enter-pin') {
               setPin('');
+              setStep(biometricAvailable ? 'biometric' : 'choose-length');
+            } else if (step === 'biometric') {
               setStep('choose-length');
             } else if (step === 'choose-length') {
               setStep('info');
@@ -308,6 +525,7 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
         </TouchableOpacity>
         <View style={styles.stepIndicator}>
           <View style={[styles.stepDot, step !== 'info' && { backgroundColor: theme.primary }]} />
+          <View style={[styles.stepDot, (step === 'biometric' || step === 'enter-pin' || step === 'confirm-pin') && { backgroundColor: theme.primary }]} />
           <View style={[styles.stepDot, (step === 'enter-pin' || step === 'confirm-pin') && { backgroundColor: theme.primary }]} />
           <View style={[styles.stepDot, step === 'confirm-pin' && { backgroundColor: theme.primary }]} />
         </View>
@@ -329,6 +547,7 @@ export default function SetupSecurityPinScreen({ navigation, route }: SetupSecur
         >
           {step === 'info' && renderInfoStep()}
           {step === 'choose-length' && renderChooseLengthStep()}
+          {step === 'biometric' && renderBiometricStep()}
           {step === 'enter-pin' && renderPinInput(pin, false)}
           {step === 'confirm-pin' && renderPinInput(confirmPin, true)}
         </ScrollView>
@@ -534,5 +753,23 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: SIZES.body,
+  },
+  skipButton: {
+    marginTop: 16,
+    paddingVertical: 12,
+  },
+  skipButtonText: {
+    fontSize: SIZES.body,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  goBackButton: {
+    marginTop: 24,
+    paddingVertical: 12,
+  },
+  goBackButtonText: {
+    fontSize: SIZES.body,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

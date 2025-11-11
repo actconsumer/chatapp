@@ -32,8 +32,7 @@ export interface Call {
   createdAt: string;
   updatedAt?: string;
   metadata?: Record<string, any>;
-  acsToken?: string;
-  acsCallId?: string;
+  // Removed Azure-specific fields: acsToken, acsCallId
   participants?: CallParticipant[];
 }
 
@@ -53,11 +52,7 @@ export interface CallHistoryParams {
   type?: 'voice' | 'video';
 }
 
-export interface ACSTokenResponse {
-  token: string;
-  userId: string;
-  expiresOn: string;
-}
+// Removed ACSTokenResponse interface - Azure-specific
 
 export interface CallSettings {
   echoCancellation: boolean;
@@ -193,20 +188,9 @@ class CallService {
 
   /**
    * Get Azure Communication Services token
+   * DEPRECATED - Azure services removed, will use Firebase/WebRTC directly
    */
-  async getACSToken(): Promise<ACSTokenResponse> {
-    try {
-      const url = buildApiUrl('/calls/acs-token');
-      const headers = await getAuthHeaders();
-      
-      const response = await axios.get(url, { headers });
-      
-      return response.data.data;
-    } catch (error: any) {
-      console.error('Get ACS token error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to get ACS token');
-    }
-  }
+  // Removed getACSToken method - Azure-specific
 
   /**
    * Update call settings

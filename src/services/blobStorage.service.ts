@@ -1,6 +1,6 @@
 /**
- * Azure Blob Storage Service
- * Handles file uploads to Azure Blob Storage for profile photos, media attachments, etc.
+ * Firebase Storage Service
+ * Handles file uploads to Firebase Storage for profile photos, media attachments, etc.
  */
 
 import axios from 'axios';
@@ -9,7 +9,7 @@ import { getAuthHeaders } from './apiHelper';
 
 export interface UploadResult {
   url: string;
-  blobName: string;
+  fileName: string;
   contentType: string;
   size: number;
 }
@@ -18,66 +18,34 @@ export interface UploadOptions {
   uri: string;
   fileName: string;
   fileType: string;
-  containerName?: 'profiles' | 'messages' | 'groups' | 'stories';
+  folder?: 'profiles' | 'messages' | 'groups' | 'stories';
 }
 
-class BlobStorageService {
+class FirebaseStorageService {
   /**
-   * Upload a file to Azure Blob Storage
-   * This method handles the entire upload process:
-   * 1. Request a SAS token from backend
-   * 2. Upload file directly to Azure Blob Storage using the SAS token
-   * 3. Return the public URL
+   * Upload a file to Firebase Storage
+   * This method handles the entire upload process through Firebase Functions
+   * Firebase initialization will be added later
    */
   async uploadFile(options: UploadOptions): Promise<UploadResult> {
-    const { uri, fileName, fileType, containerName = 'messages' } = options;
+    const { uri, fileName, fileType, folder = 'messages' } = options;
 
     try {
-      // Step 1: Request SAS token from backend
-      const sasUrl = buildApiUrl('/storage/sas-token');
-      const headers = await getAuthHeaders();
+      // TODO: Implement Firebase Storage upload
+      // For now, this is a placeholder that will be implemented after Firebase initialization
       
-      const sasResponse = await axios.post(
-        sasUrl,
-        {
-          containerName,
-          blobName: fileName,
-          contentType: fileType,
-        },
-        { headers }
-      );
-
-      const { sasToken, blobUrl, uploadUrl } = sasResponse.data.data;
-
-      // Step 2: Upload file to Azure Blob Storage
-      const formData = new FormData();
-      formData.append('file', {
-        uri,
-        name: fileName,
-        type: fileType,
-      } as any);
-
-      const uploadResponse = await axios.put(uploadUrl || blobUrl, formData, {
-        headers: {
-          'Content-Type': fileType,
-          'x-ms-blob-type': 'BlockBlob',
-        },
-        transformRequest: (data, headers) => {
-          // Don't transform the request for blob upload
-          return data;
-        },
-      });
-
-      // Step 3: Return the result
+      console.log('Firebase Storage upload will be implemented after Firebase initialization');
+      
+      // Placeholder return - will be replaced with actual Firebase upload
       return {
-        url: blobUrl.split('?')[0], // Remove SAS token from URL
-        blobName: fileName,
+        url: '', // Will be the Firebase Storage download URL
+        fileName: fileName,
         contentType: fileType,
-        size: 0, // Size will be determined by backend
+        size: 0,
       };
     } catch (error: any) {
-      console.error('Blob upload error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to upload file');
+      console.error('Firebase Storage upload error:', error);
+      throw new Error(error.message || 'Failed to upload file to Firebase Storage');
     }
   }
 
@@ -90,7 +58,7 @@ class BlobStorageService {
       uri,
       fileName: `profile-${Date.now()}-${fileName}`,
       fileType,
-      containerName: 'profiles',
+      folder: 'profiles',
     });
 
     return result.url;
@@ -105,7 +73,7 @@ class BlobStorageService {
       uri,
       fileName: `group-${groupId}-${Date.now()}-${fileName}`,
       fileType,
-      containerName: 'groups',
+      folder: 'groups',
     });
 
     return result.url;
@@ -124,7 +92,7 @@ class BlobStorageService {
       uri,
       fileName: `chat-${chatId}-${Date.now()}-${fileName}`,
       fileType,
-      containerName: 'messages',
+      folder: 'messages',
     });
   }
 
@@ -137,7 +105,7 @@ class BlobStorageService {
       uri,
       fileName: `story-${Date.now()}-${fileName}`,
       fileType,
-      containerName: 'stories',
+      folder: 'stories',
     });
 
     return result.url;
@@ -192,23 +160,19 @@ class BlobStorageService {
   }
 
   /**
-   * Delete a blob from storage
+   * Delete a file from Firebase Storage
    */
-  async deleteFile(blobUrl: string): Promise<void> {
+  async deleteFile(fileUrl: string): Promise<void> {
     try {
-      const deleteUrl = buildApiUrl('/storage/delete');
-      const headers = await getAuthHeaders();
-      
-      await axios.delete(deleteUrl, {
-        headers,
-        data: { blobUrl },
-      });
+      // TODO: Implement Firebase Storage delete
+      // Will be implemented after Firebase initialization
+      console.log('Firebase Storage delete will be implemented after Firebase initialization');
     } catch (error: any) {
-      console.error('Blob delete error:', error);
-      throw new Error(error.response?.data?.message || 'Failed to delete file');
+      console.error('Firebase Storage delete error:', error);
+      throw new Error(error.message || 'Failed to delete file from Firebase Storage');
     }
   }
 }
 
-export const blobStorageService = new BlobStorageService();
-export default BlobStorageService;
+export const firebaseStorageService = new FirebaseStorageService();
+export default FirebaseStorageService;

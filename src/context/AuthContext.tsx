@@ -59,9 +59,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           setUser(mockUser);
         } else {
-          // Fetch current user from API for real tokens
-          const currentUser = await authService.getCurrentUser();
-          setUser(currentUser);
+          // TODO: Connect to Firebase backend
+          const mockUser: User = {
+            id: 'mock-user-123',
+            email: 'user@test.com',
+            username: 'mockuser',
+            displayName: 'Mock User',
+            avatar: 'https://i.pravatar.cc/150?img=50',
+            isEmailVerified: true,
+            twoFactorEnabled: false,
+            securityPinConfigured: false,
+          };
+          setUser(mockUser);
         }
       }
     } catch (error) {
@@ -79,8 +88,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshUser = async () => {
     try {
-      const currentUser = await authService.getCurrentUser();
-      setUser(currentUser);
+      // TODO: Connect to Firebase backend
+      console.log('Refresh user data');
+      
+      // Mock: Update user to mark security features as configured
+      if (user) {
+        setUser({
+          ...user,
+          twoFactorEnabled: true,
+          securityPinConfigured: true,
+        });
+      }
     } catch (error) {
       console.error('Refresh user error:', error);
     }
@@ -90,14 +108,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Call actual login API
-      const response = await authService.login({ email, password });
+      // TODO: Connect to Firebase backend
+      console.log('Login:', { email, password });
       
-      // Store tokens
-      await authService.storeTokens(response.tokens);
+      // Mock user for frontend state
+      const mockUser: User = {
+        id: 'user-123',
+        email,
+        username: email.split('@')[0],
+        displayName: 'User',
+        avatar: 'https://i.pravatar.cc/150?img=55',
+        isEmailVerified: true,
+        twoFactorEnabled: false,
+        securityPinConfigured: false,
+      };
       
-      // Set user data
-      setUser(response.user);
+      setUser(mockUser);
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -141,19 +167,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       
-      // Call actual registration API
-      const response = await authService.register({
+      // TODO: Connect to Firebase backend
+      console.log('Register:', { email, username, password, displayName });
+      
+      // Mock user for frontend state
+      const mockUser: User = {
+        id: 'user-new-123',
         email,
         username,
-        password,
         displayName,
-      });
+        avatar: undefined,
+        isEmailVerified: false,
+        twoFactorEnabled: false,
+        securityPinConfigured: false,
+      };
       
-      // Store tokens
-      await authService.storeTokens(response.tokens);
-      
-      // Set user data
-      setUser(response.user);
+      setUser(mockUser);
     } catch (error) {
       console.error('Registration error:', error);
       throw error;
@@ -164,8 +193,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // Call logout API
-      await authService.logout();
+      // TODO: Connect to Firebase backend
+      console.log('Logout');
       
       // Clear local data
       setUser(null);
@@ -177,11 +206,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyEmail = async (code: string) => {
     try {
-      // Call verify email API
+      // TODO: Connect to Firebase backend
+      console.log('Verify email with code:', code);
+      
+      // Update user verification status
       if (user) {
-        await authService.verifyEmail(user.email, code);
-        
-        // Update user verification status
         const updatedUser = { ...user, isEmailVerified: true };
         setUser(updatedUser);
       }
@@ -193,8 +222,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const forgotPassword = async (email: string) => {
     try {
-      // Call forgot password API
-      await authService.forgotPassword(email);
+      // TODO: Connect to Firebase backend
+      console.log('Forgot password for:', email);
     } catch (error) {
       console.error('Forgot password error:', error);
       throw error;
@@ -203,8 +232,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string, otpCode: string, newPassword: string) => {
     try {
-      // Call reset password API
-      await authService.resetPassword(email, otpCode, newPassword);
+      // TODO: Connect to Firebase backend
+      console.log('Reset password for:', email, 'with code:', otpCode);
     } catch (error) {
       console.error('Reset password error:', error);
       throw error;
@@ -213,8 +242,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resendVerification = async (email: string) => {
     try {
-      // Call resend verification API
-      await authService.resendVerification(email);
+      // TODO: Connect to Firebase backend
+      console.log('Resend verification for:', email);
     } catch (error) {
       console.error('Resend verification error:', error);
       throw error;

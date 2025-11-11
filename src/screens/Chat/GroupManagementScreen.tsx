@@ -79,13 +79,20 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
     }
 
     try {
-      const summary = await chatService.get(targetGroupId);
-      if (summary.type !== 'group') {
+      // TODO: Connect to Firebase backend
+      const mockSummary: any = {
+        id: targetGroupId,
+        type: 'group',
+        name: 'Mock Group',
+        avatar: null,
+        participants: []
+      };
+      if (mockSummary.type !== 'group') {
         setErrorMessage('This conversation is not a group chat');
       }
-      setGroupSummary(summary);
-      setGroupName(summary.name || '');
-      setGroupPhoto(summary.avatar || null);
+      setGroupSummary(mockSummary);
+      setGroupName(mockSummary.name || '');
+      setGroupPhoto(mockSummary.avatar || null);
       setErrorMessage(null);
     } catch (error: any) {
       console.error('Failed to load group details:', error);
@@ -132,12 +139,13 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
 
     const timeout = setTimeout(async () => {
       try {
-        const users = await userService.searchUsers({ query: trimmedQuery, limit: 20 });
+        // TODO: Connect to Firebase backend
+        const mockUsers: any[] = [];
         if (cancelled) {
           return;
         }
 
-        const filtered = users.filter(
+        const filtered = mockUsers.filter(
           (candidate) =>
             candidate.id !== currentUserId &&
             !participants.some((participant) => participant.id === candidate.id)
@@ -177,10 +185,12 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
 
     try {
       setUpdatingName(true);
-      const updated = await groupService.update(groupSummary.id, { name: groupName.trim() });
-      setGroupSummary(updated);
-      setGroupName(updated.name || groupName.trim());
-      setGroupPhoto(updated.avatar || groupPhoto);
+      // TODO: Connect to Firebase backend
+      console.log('Update group name:', groupName.trim());
+      const mockUpdated = { ...groupSummary, name: groupName.trim() };
+      setGroupSummary(mockUpdated);
+      setGroupName(mockUpdated.name || groupName.trim());
+      setGroupPhoto(mockUpdated.avatar || groupPhoto);
       setIsEditingName(false);
       Alert.alert('Success', 'Group name updated successfully.');
     } catch (error) {
@@ -208,10 +218,15 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
       }
       setParticipantActionUser(participantId);
       try {
-        const updated = await groupService.removeMember(groupSummary.id, participantId);
-        setGroupSummary(updated);
-        setGroupName(updated.name || groupName);
-        setGroupPhoto(updated.avatar || null);
+        // TODO: Connect to Firebase backend
+        console.log('Remove participant:', participantId);
+        const mockUpdated = {
+          ...groupSummary,
+          participants: groupSummary.participants?.filter(p => p.id !== participantId)
+        };
+        setGroupSummary(mockUpdated);
+        setGroupName(mockUpdated.name || groupName);
+        setGroupPhoto(mockUpdated.avatar || null);
         Alert.alert('Participant Removed', 'The member has been removed from the group.');
       } catch (error) {
         console.error('Remove participant error:', error);
@@ -259,10 +274,17 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
 
       setParticipantActionUser(participantId);
       try {
-        const updated = await chatService.updateParticipantRole(groupSummary.id, participantId, 'admin');
-        setGroupSummary(updated);
-        setGroupName(updated.name || groupName);
-        setGroupPhoto(updated.avatar || null);
+        // TODO: Connect to Firebase backend
+        console.log('Promote to admin:', participantId);
+        const mockUpdated = {
+          ...groupSummary,
+          participants: groupSummary.participants?.map(p =>
+            p.id === participantId ? { ...p, role: 'admin' as const } : p
+          )
+        };
+        setGroupSummary(mockUpdated as any);
+        setGroupName(mockUpdated.name || groupName);
+        setGroupPhoto(mockUpdated.avatar || null);
         Alert.alert('Success', 'Participant promoted to admin.');
       } catch (error) {
         console.error('Promote participant error:', error);
@@ -286,10 +308,22 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
 
       setParticipantActionUser(profile.id);
       try {
-        const updated = await groupService.addMembers(groupSummary.id, [profile.id]);
-        setGroupSummary(updated);
-        setGroupName(updated.name || groupName);
-        setGroupPhoto(updated.avatar || null);
+        // TODO: Connect to Firebase backend
+        console.log('Add participant:', profile.id);
+        const newParticipant = {
+          id: profile.id,
+          username: profile.username,
+          displayName: profile.displayName,
+          avatar: profile.avatar,
+          role: 'member' as const
+        };
+        const mockUpdated = {
+          ...groupSummary,
+          participants: [...(groupSummary.participants || []), newParticipant]
+        };
+        setGroupSummary(mockUpdated as any);
+        setGroupName(mockUpdated.name || groupName);
+        setGroupPhoto(mockUpdated.avatar || null);
         setShowAddParticipantModal(false);
         setSearchQuery('');
         setSearchResults([]);
@@ -335,10 +369,11 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
       const asset = result.assets[0];
       setUpdatingPhoto(true);
 
-      await groupService.updateAvatar(groupSummary.id, asset.uri, asset.mimeType || undefined);
-      const refreshed = await chatService.get(groupSummary.id);
-      setGroupSummary(refreshed);
-      setGroupPhoto(refreshed.avatar || asset.uri);
+      // TODO: Connect to Firebase Storage and backend
+      console.log('Update group photo:', asset.uri);
+      const mockRefreshed = { ...groupSummary, avatar: asset.uri };
+      setGroupSummary(mockRefreshed as any);
+      setGroupPhoto(mockRefreshed.avatar || asset.uri);
       Alert.alert('Success', 'Group photo updated successfully.');
     } catch (error) {
       console.error('Update group photo error:', error);
@@ -371,7 +406,8 @@ export default function GroupManagementScreen({ route, navigation }: GroupManage
           style: 'destructive',
           onPress: async () => {
             try {
-              await groupService.leave(groupSummary.id);
+              // TODO: Connect to Firebase backend
+              console.log('Leave group:', groupSummary.id);
               navigation.popToTop();
               Alert.alert('Left Group', 'You have left the group successfully.');
             } catch (error) {

@@ -135,8 +135,10 @@ export default function DirectContactInfoScreen({ navigation, route, initialSumm
       return;
     }
     try {
-      const refreshed = await chatService.get(chatId);
-      assignSummary(refreshed);
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Refresh chat summary from Firebase:', chatId);
+      
+      // Mock: Keep existing summary
       setErrorMessage(null);
     } catch (error: any) {
       console.error('DirectContactInfoScreen refreshSummary error:', error);
@@ -170,10 +172,16 @@ export default function DirectContactInfoScreen({ navigation, route, initialSumm
     }
 
     try {
-      const [profile, blockedUsers] = await Promise.all([
-        userService.getUser(otherParticipant.id),
-        privacyService.getBlockedUsers(),
-      ]);
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Load user profile and blocked users from Firebase:', otherParticipant.id);
+      
+      // Mock: Create basic profile
+      const profile = {
+        id: otherParticipant.id,
+        displayName: otherParticipant.displayName,
+        avatar: otherParticipant.avatar,
+      } as any;
+      const blockedUsers: any[] = [];
 
       setContactProfile(profile);
       setIsBlocked(blockedUsers.some((blocked) => blocked.id === otherParticipant.id));
@@ -259,11 +267,13 @@ export default function DirectContactInfoScreen({ navigation, route, initialSumm
     try {
       setProcessingBlock(true);
       if (isBlocked) {
-        await privacyService.unblockUser(otherParticipant.id);
+        // TODO: Connect to Firebase backend
+        console.log('TODO: Unblock user in Firebase:', otherParticipant.id);
         setIsBlocked(false);
         Alert.alert('Unblocked', `${resolvedChatName} has been unblocked.`);
       } else {
-        await privacyService.blockUser(otherParticipant.id);
+        // TODO: Connect to Firebase backend
+        console.log('TODO: Block user in Firebase:', otherParticipant.id);
         setIsBlocked(true);
         Alert.alert('Blocked', `${resolvedChatName} has been blocked.`);
       }
@@ -282,10 +292,10 @@ export default function DirectContactInfoScreen({ navigation, route, initialSumm
 
     try {
       setReporting(true);
-      await moderationService.reportUser(otherParticipant.id, {
-        reason: 'user_report',
-        chatId,
-      });
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Report user in Firebase:', otherParticipant.id, { chatId });
+      
       Alert.alert('Report Submitted', 'Our moderation team will review this conversation.');
     } catch (error) {
       console.error('DirectContactInfoScreen report error:', error);

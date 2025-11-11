@@ -71,8 +71,12 @@ export default function CallParticipantsScreen({ route, navigation }: CallPartic
 
     try {
       setIsLoading(true);
-      const call = await callService.getCall(callId);
-      const mappedParticipants = mapParticipants(call.participants);
+      // TODO: Connect to Firebase backend
+      // Temporary mock for frontend state
+      const mockCall = {
+        participants: []
+      };
+      const mappedParticipants = mapParticipants(mockCall.participants);
       setParticipants(mappedParticipants);
       setError(null);
     } catch (err) {
@@ -141,7 +145,8 @@ export default function CallParticipantsScreen({ route, navigation }: CallPartic
           style: 'destructive',
           onPress: async () => {
             try {
-              await callService.removeParticipant(callId, participantId);
+              // TODO: Connect to Firebase backend
+              console.log('Remove participant:', participantId);
               await fetchParticipants();
             } catch (err: any) {
               console.error('Failed to remove participant:', err);

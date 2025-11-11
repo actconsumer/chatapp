@@ -24,8 +24,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { SIZES } from '../../utils/constants';
 import StoryHeader from './components/StoryHeader';
-import { blobStorageService } from '../../services/blobStorage.service';
-import { storyService } from '../../services/story.service';
 
 const { width, height } = Dimensions.get('window');
 
@@ -289,9 +287,11 @@ export default function EnhancedVideoEditorScreen({ navigation, route }: Enhance
 
     setIsPublishing(true);
     try {
-      // Upload video to blob storage
-      const fileName = `story-video-${Date.now()}.mp4`;
-      const mediaUrl = await blobStorageService.uploadStoryMedia(mediaUri, fileName);
+      // TODO: Connect to Firebase Storage backend
+      console.log('TODO: Upload video to Firebase Storage:', mediaUri);
+      
+      // Mock: Use local URI
+      const mediaUrl = mediaUri;
 
       // Prepare story data
       const storyData: any = {
@@ -306,8 +306,8 @@ export default function EnhancedVideoEditorScreen({ navigation, route }: Enhance
         storyData.caption = textOverlays.map(t => t.text).join(' ');
       }
 
-      // Create the story
-      await storyService.create(storyData);
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Create story in Firebase:', storyData);
 
       setIsPublishing(false);
       navigation.navigate('StoryList');

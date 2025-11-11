@@ -20,8 +20,8 @@ import {
   RecordingPresets,
 } from 'expo-audio';
 import { LinearGradient } from 'expo-linear-gradient';
-import { blobStorageService } from '../services/blobStorage.service';
-import { messageService } from '../services/message.service';
+
+// Removed service imports - will use Firebase
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -235,27 +235,11 @@ export default function VoiceRecorder({
 
     try {
       if (autoSend && chatId) {
-        // Upload to blob storage and send message via service
+        // TODO: Connect to Firebase Storage and backend
         setIsUploading(true);
 
-        // Upload audio file to Azure Blob Storage
-        const fileName = `voice_${Date.now()}.m4a`;
-        const uploadResult = await blobStorageService.uploadMessageAttachment(
-          recordingUri,
-          fileName,
-          chatId
-        );
-
-        // Send message with audio URL
-        await messageService.sendMessage({
-          chatId,
-          mediaUrl: uploadResult.url,
-          mediaType: 'voice',
-          metadata: {
-            duration: duration,
-            waveform: audioLevels, // Optional: store waveform data
-          },
-        });
+        console.log('Upload voice message:', recordingUri);
+        console.log('Send voice message with duration:', duration);
 
         setIsUploading(false);
         onCancel();

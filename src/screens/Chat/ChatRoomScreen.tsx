@@ -241,7 +241,8 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
       setShouldScrollToEnd(true);
 
       if (!mapped.isMine) {
-        chatService.markRead(chatId, data.id || mapped.id).catch(() => {});
+        // TODO: Connect to Firebase backend
+        console.log('Mark message as read:', chatId, data.id || mapped.id);
       }
     },
     [chatId, mapBackendToMessage]
@@ -330,10 +331,11 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
   const fetchInitial = useCallback(async () => {
     try {
       setLoading(true);
-      const list = await chatService.messages(chatId, { limit: PAGE_SIZE });
-      const mapped: Message[] = list.map(mapBackendToMessage);
+      // TODO: Connect to Firebase backend
+      const mockList: any[] = [];
+      const mapped: Message[] = mockList.map(mapBackendToMessage);
       setMessages(mapped.reverse());
-      setHasMore(list.length === PAGE_SIZE);
+      setHasMore(false);
     } catch (e) {
       Alert.alert('Error', 'Failed to load messages');
     } finally {
@@ -474,8 +476,8 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
     };
     init();
 
-    // Mark all as read when entering
-    chatService.markRead(chatId).catch(() => {});
+    // TODO: Connect to Firebase backend
+    console.log('Mark messages as read for chat:', chatId);
 
     // Dismiss keyboard listener
     const subscription = Keyboard.addListener('keyboardDidHide', () => Keyboard.dismiss());
@@ -496,14 +498,12 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
     try {
       setFetchingMore(true);
       const oldest = messages[0];
-      const list = await chatService.messages(chatId, {
-        limit: PAGE_SIZE,
-        before: oldest.timestamp ? oldest.timestamp.toISOString() : undefined,
-      });
-      const mapped: Message[] = list.map(mapBackendToMessage);
+      // TODO: Connect to Firebase backend
+      const mockList: any[] = [];
+      const mapped: Message[] = mockList.map(mapBackendToMessage);
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setMessages(prev => [...mapped.reverse(), ...prev]);
-      if (list.length < PAGE_SIZE) setHasMore(false);
+      if (mockList.length < PAGE_SIZE) setHasMore(false);
     } catch (e) {
       // silent
     } finally {
@@ -546,20 +546,19 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
 
           (async () => {
             try {
-              const upload = await messageService.uploadMedia({
-                chatId,
-                file: {
-                  uri: file.uri,
-                  name: file.name || `upload-${Date.now()}`,
-                  type: guessMimeType(file),
-                },
-              });
+              // TODO: Connect to Firebase Storage and backend
+              console.log('Upload media:', file.uri);
+
+              const mockUpload = {
+                mediaUrl: file.uri,
+                mediaType: mediaType
+              };
 
               const payload: SendMessageRequest = {
                 chatId,
                 text: caption ? caption : undefined,
-                mediaUrl: upload.mediaUrl,
-                mediaType: normalizeMediaType(upload.mediaType) || mediaType,
+                mediaUrl: mockUpload.mediaUrl,
+                mediaType: normalizeMediaType(mockUpload.mediaType) || mediaType,
                 replyTo: replyTo?.id,
                 metadata: {
                   fileName: file.name,
@@ -567,13 +566,14 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
                 },
               };
 
-              const sent = await messageService.sendMessage(payload);
-              const nextMessage = mapBackendToMessage(sent);
+              // TODO: Connect to Firebase backend
+              console.log('Send message:', payload);
+              const mockSent = { ...payload, id: optimisticId };
+              const nextMessage = mapBackendToMessage(mockSent);
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setMessages(prev =>
                 prev.map(m => (m.id === optimisticId ? nextMessage : m))
               );
-              chatService.markRead(chatId, sent.id).catch(() => {});
             } catch (error) {
               setMessages(prev =>
                 prev.map(m => (m.id === optimisticId ? { ...m, status: 'failed' } : m))
@@ -617,11 +617,12 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
           text: trimmedText,
           replyTo: replyTo?.id,
         };
-        const sent = await messageService.sendMessage(payload);
-        const nextMessage = mapBackendToMessage(sent);
+        // TODO: Connect to Firebase backend
+        console.log('Send text message:', payload);
+        const mockSent = { ...payload, id: optimisticId };
+        const nextMessage = mapBackendToMessage(mockSent);
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setMessages(prev => prev.map(m => (m.id === optimisticId ? nextMessage : m)));
-        chatService.markRead(chatId, sent.id).catch(() => {});
       } catch (error) {
         setMessages(prev =>
           prev.map(m => (m.id === optimisticId ? { ...m, status: 'failed' } : m))
@@ -766,8 +767,8 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
               LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
               setMessages(prev => prev.filter(msg => msg.id !== message.id));
               
-              // Call backend API
-              await messageService.deleteForMe(message.id);
+              // TODO: Connect to Firebase backend
+              console.log('TODO: Delete message for me in Firebase:', message.id);
             } catch (error) {
               // Revert on error
               Alert.alert('Error', 'Failed to delete message');
@@ -790,8 +791,8 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
                 )
               );
               
-              // Call backend API
-              await messageService.deleteForEveryone(message.id);
+              // TODO: Connect to Firebase backend
+              console.log('TODO: Delete message for everyone in Firebase:', message.id);
               
               // Emit socket event for real-time sync
               socketService.send('message:deleted', { 
@@ -915,14 +916,8 @@ export default function ChatRoomScreen({ route, navigation }: ChatRoomScreenProp
         })
       );
 
-      // Call backend API
-      if (myReaction && myReaction.emoji !== emoji) {
-        // Remove old reaction first
-        await messageService.removeReaction(messageId, myReaction.emoji);
-      }
-      
-      // Add new reaction
-      await messageService.reactToMessage(messageId, { emoji });
+      // TODO: Connect to Firebase backend
+      console.log('TODO: React to message in Firebase:', messageId, emoji);
       
       // Emit socket event for real-time sync
       socketService.send('message:reaction', {

@@ -134,8 +134,8 @@ export default function AddParticipantsScreen({ route, navigation }: AddParticip
 
     try {
       setAdding(true);
-
-      await callService.addParticipants(callId, selectedContacts.map(c => c.id));
+      // TODO: Connect to Firebase backend
+      console.log('Add participants:', selectedContacts.map(c => c.id));
 
       setSelectedContacts([]);
       navigation.goBack();

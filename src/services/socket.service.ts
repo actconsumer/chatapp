@@ -67,7 +67,9 @@ class SocketService {
       const token = await getToken();
       
       if (!token) {
-        throw new Error('No authentication token available');
+        console.log('No auth token - skipping socket connection for now');
+        // TODO: Connect to Firebase backend with proper authentication
+        return;
       }
 
       // Use base URL without /api/v1 path for socket connection

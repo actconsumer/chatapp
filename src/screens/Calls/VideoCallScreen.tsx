@@ -14,7 +14,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAudioPlayer } from 'expo-audio';
 import { callService, CallSettings } from '../../services/call.service';
-import { applyAcsVoiceProcessing, applyAcsVideoSettings, disposeAcsResources } from '../../services/acsAudioManager';
+// Removed Azure ACS audio/video manager import
 import { socketService } from '../../services/socket.service';
 import CallQualityIndicator from '../../components/CallQualityIndicator';
 
@@ -72,11 +72,19 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
 
   const loadCallSettings = async () => {
     try {
-      const settings = await callService.getCallSettings();
-      setCallSettings(settings);
+      // TODO: Connect to Firebase backend
+      // Temporary mock settings for frontend state
+      const mockSettings: CallSettings = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        videoBitrate: 1500,
+        preferredResolution: '720p'
+      };
+      setCallSettings(mockSettings);
       
       // Apply settings to the call stream
-      await applyCallSettings(settings, {
+      await applyCallSettings(mockSettings, {
         enableVideo: isVideoOn,
         frontCamera: isFrontCamera,
       });
@@ -99,15 +107,17 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
     };
 
     try {
-      await applyAcsVoiceProcessing(settings);
+      // TODO: Apply audio processing with WebRTC directly after Firebase setup
+      console.log('Audio processing will be implemented with WebRTC');
     } catch (error) {
-      console.warn('[ACS] Failed to apply voice processing for video call', error);
+      console.warn('Failed to apply voice processing for video call', error);
     }
 
     try {
-      await applyAcsVideoSettings(settings, overrides);
+      // TODO: Apply video settings with WebRTC directly after Firebase setup
+      console.log('Video settings will be implemented with WebRTC');
     } catch (error) {
-      console.warn('[ACS] Failed to apply video settings', error);
+      console.warn('Failed to apply video settings', error);
     }
 
     // Apply video constraints based on resolution
@@ -117,7 +127,7 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
       frameRate: { ideal: 30, max: 30 },
     };
 
-    // In a real implementation with WebRTC or ACS:
+    // In a real implementation with WebRTC:
     // navigator.mediaDevices.getUserMedia({
     //   audio: audioConstraints,
     //   video: videoConstraints
@@ -190,10 +200,12 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
       try {
         if (!socketService.isConnected()) await socketService.connect();
         const offer = { sdp: 'placeholder', type: 'offer' };
-        const callData = await callService.initiateCall({ receiverId: chatId, type: 'video', offer });
+        // TODO: Connect to Firebase backend
+        const mockCallData = { id: 'mock-call-id' };
+        console.log('Initiate call:', { receiverId: chatId, type: 'video', offer });
         if (canceled) return;
         
-        setActiveCallId(callData.id);
+        setActiveCallId(mockCallData.id);
         setCallStatus('ringing');
         callStartTime.current = Date.now();
         
@@ -233,12 +245,14 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
       StatusBar.setBarStyle('default');
       socketService.off('settings:updated');
 
-      disposeAcsResources().catch(() => {});
+      // TODO: Cleanup WebRTC resources after Firebase setup
+      console.log('Cleanup will be implemented with WebRTC');
       
       // Send telemetry on cleanup
       if (activeCallId && callStatus === 'connected') {
         const duration = Math.floor((Date.now() - callStartTime.current) / 1000);
-        callService.sendTelemetry({
+        // TODO: Connect to Firebase backend
+        console.log('Send telemetry:', {
           callId: activeCallId,
           duration,
           quality: {
@@ -250,7 +264,7 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
           },
           issues: [],
           timestamp: new Date().toISOString(),
-        }).catch(() => {});
+        });
       }
     };
   }, [chatId]);
@@ -330,17 +344,23 @@ export default function VideoCallScreen({ route, navigation }: VideoCallScreenPr
         unavailablePlayer.play();
         // Wait a bit for sound to play before going back
         setTimeout(() => {
-          disposeAcsResources().catch(() => {});
+          // TODO: Cleanup WebRTC resources after Firebase setup
           navigation.goBack();
         }, 1500);
       } catch (error) {
         console.error('Failed to play unavailable sound', error);
-        disposeAcsResources().catch(() => {});
+        // TODO: Cleanup WebRTC resources after Firebase setup
         navigation.goBack();
       }
     } else {
-      try { await callService.endCall(chatId); } catch {}
-      try { await disposeAcsResources(); } catch {}
+      try { 
+        // TODO: Connect to Firebase backend
+        console.log('End call:', chatId); 
+      } catch {}
+      try { 
+        // TODO: Cleanup WebRTC resources after Firebase setup
+        console.log('Cleanup will be implemented with WebRTC');
+      } catch {}
       navigation.goBack();
     }
   };

@@ -3,17 +3,31 @@
  * Central configuration for all API endpoints
  */
 
-// API Base URLs
+// Firebase Configuration
+// This will be configured after Firebase project setup
+export const FIREBASE_CONFIG = {
+  apiKey: '', // Add your Firebase API key
+  authDomain: '', // Add your Firebase auth domain
+  projectId: '', // Add your Firebase project ID
+  storageBucket: '', // Add your Firebase storage bucket
+  messagingSenderId: '', // Add your Firebase messaging sender ID
+  appId: '', // Add your Firebase app ID
+  measurementId: '', // Optional: Add your Firebase measurement ID
+};
+
+// API Base URLs - Now will use Firebase Functions/Firestore
 export const API_CONFIG = {
   // Development
   DEV: {
-    BASE_URL: 'http://localhost:3000',
+    BASE_URL: 'http://localhost:5001', // Firebase emulator default port
     API_VERSION: 'v1',
+    USE_FIREBASE: true,
   },
   // Production
   PROD: {
-    BASE_URL: 'https://api.projectchat.azure-api.net',
+    BASE_URL: '', // Will be replaced with Firebase Functions URL
     API_VERSION: 'v1',
+    USE_FIREBASE: true,
   },
 };
 
@@ -215,9 +229,9 @@ export const buildApiUrl = (endpoint: string): string => {
   return `${baseUrl}/api/${version}/${cleanEndpoint}`;
 };
 
-// Email configuration
+// Email configuration (via Firebase extensions or Cloud Functions)
 export const EMAIL_CONFIG = {
-  FROM: 'no-reply@projectchat.azurecomm.net',
+  FROM: 'no-reply@projectchat.com', // Update with your verified domain
   FROM_NAME: 'Project Chat',
 };
 

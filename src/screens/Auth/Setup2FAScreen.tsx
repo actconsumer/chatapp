@@ -80,8 +80,14 @@ export default function Setup2FAScreen({ navigation, route }: Setup2FAScreenProp
     try {
       setErrorMessage(null);
       setLoadingStage('setup');
-      const response = await twoFactorAuthService.setup();
-      setProvisionPayload(response);
+      // TODO: Connect to Firebase backend
+      // Temporary mock response for frontend state
+      const mockResponse = {
+        secret: 'MOCK_SECRET_KEY',
+        qrCode: 'data:image/png;base64,mock',
+        backupCodes: ['BACKUP1', 'BACKUP2', 'BACKUP3', 'BACKUP4', 'BACKUP5']
+      };
+      setProvisionPayload(mockResponse);
       setIsBackupCodesSaved(false);
       setStep('provision');
     } catch (error: any) {
@@ -148,15 +154,10 @@ export default function Setup2FAScreen({ navigation, route }: Setup2FAScreenProp
     try {
       setErrorMessage(null);
       setLoadingStage('verify');
-      const response = await twoFactorAuthService.verify(verificationCode.trim());
-
-      // Update local backup codes if API returned fresh set
-      if (response?.backupCodes?.length) {
-        setProvisionPayload((prev) =>
-          prev ? { ...prev, backupCodes: response.backupCodes } : { secret: '', qrCode: '', backupCodes: response.backupCodes },
-        );
-      }
-
+      // TODO: Connect to Firebase backend
+      // Temporary mock response for frontend state
+      console.log('Verification code:', verificationCode.trim());
+      
       await refreshUser();
       navigation.replace('SetupSecurityPin');
     } catch (error: any) {

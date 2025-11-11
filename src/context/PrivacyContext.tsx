@@ -38,10 +38,9 @@ export const PrivacyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     setIsFetching(true);
     try {
-      const freshSettings = await privacyService.getPrivacySettings();
-      if (freshSettings) {
-        setSettings(freshSettings);
-      }
+      // TODO: Connect to Firebase backend
+      const mockSettings = DEFAULT_PRIVACY_SETTINGS;
+      setSettings(mockSettings);
     } catch (error) {
       console.error('Privacy settings refresh error:', error);
     } finally {
@@ -65,12 +64,9 @@ export const PrivacyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       setSettings(optimistic);
 
       try {
-        const persisted = await privacyService.updatePrivacySettings(updates);
-        if (persisted) {
-          setSettings(persisted);
-        } else {
-          setSettings(optimistic);
-        }
+        // TODO: Connect to Firebase backend
+        console.log('Update privacy settings:', updates);
+        setSettings(optimistic);
       } catch (error) {
         console.error('Privacy settings update error:', error);
         setSettings(previousSettings);

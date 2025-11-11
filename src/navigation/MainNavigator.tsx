@@ -46,6 +46,7 @@ export default function MainNavigator() {
           fontWeight: '600',
         },
       })}
+      initialRouteName="Chats"
     >
       <Tab.Screen name="Chats" component={ChatListScreen} />
       <Tab.Screen name="Stories" component={StoryListScreen} />

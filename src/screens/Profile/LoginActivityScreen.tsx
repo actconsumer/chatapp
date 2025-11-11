@@ -37,7 +37,12 @@ export default function LoginActivityScreen({ navigation }: LoginActivityScreenP
   const loadSessions = async () => {
     try {
       setLoading(true);
-      const data = await authService.getSessions();
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Fetch user sessions from Firebase');
+      
+      // Mock: Return empty sessions array
+      const data: Session[] = [];
       setSessions(data);
     } catch (error) {
       console.error('Failed to load sessions:', error);
@@ -64,7 +69,9 @@ export default function LoginActivityScreen({ navigation }: LoginActivityScreenP
           style: 'destructive',
           onPress: async () => {
             try {
-              await authService.logoutSession(session.id);
+              // TODO: Connect to Firebase backend
+              console.log('TODO: Logout session in Firebase:', session.id);
+              
               setSessions((prev) => prev.filter((s) => s.id !== session.id));
               Alert.alert('Success', 'Device logged out successfully');
             } catch (error) {
@@ -87,7 +94,9 @@ export default function LoginActivityScreen({ navigation }: LoginActivityScreenP
           style: 'destructive',
           onPress: async () => {
             try {
-              await authService.logoutAllOtherSessions();
+              // TODO: Connect to Firebase backend
+              console.log('TODO: Logout all other sessions in Firebase');
+              
               await loadSessions();
               Alert.alert('Success', 'All other devices logged out');
             } catch (error) {

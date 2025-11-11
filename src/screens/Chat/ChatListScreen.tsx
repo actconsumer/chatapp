@@ -274,17 +274,11 @@ export default function ChatListScreen({ navigation }: any) {
     try {
       setLoadingFriends(true);
       
-      // Get all users we have conversations with
-      const users = await userService.searchUsers({ query: '', limit: 100 });
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Load friends from Firebase');
       
-      // Map to Friend format with presence
-      const mappedFriends: Friend[] = users.map((u: UserProfile) => ({
-        id: u.id,
-        name: u.displayName || u.username,
-        avatar: u.avatar,
-        hasActiveStory: false, // Will be updated by loadStories
-        isOnline: false, // Will be updated by socket events
-      }));
+      // Mock: Empty friends list
+      const mappedFriends: Friend[] = [];
       
       if (isMountedRef.current) {
         setFriends(mappedFriends);
@@ -304,11 +298,12 @@ export default function ChatListScreen({ navigation }: any) {
     try {
       setLoadingStories(true);
       
-      // Load all stories
-      const allStories = await storyService.list();
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Load stories from Firebase');
       
-      // Load my stories
-      const userStories = await storyService.myStories();
+      // Mock: Return empty arrays
+      const allStories: Story[] = [];
+      const userStories: Story[] = [];
       
       if (isMountedRef.current) {
         setStories(allStories);
@@ -355,11 +350,16 @@ export default function ChatListScreen({ navigation }: any) {
   const handleGroupCreation = async (values: CreateGroupFormValues) => {
     try {
       setCreatingGroup(true);
-      const group = await groupService.create({
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Create group in Firebase:', values);
+      
+      // Mock: Create temporary group object
+      const group = {
+        id: `temp-${Date.now()}`,
         name: values.name,
-        participantIds: values.participantIds,
-        avatarUri: values.photoUri,
-      });
+        avatar: values.photoUri,
+      } as any;
       
       // Close modal and navigate to new group chat
       setShowGroupModal(false);
@@ -393,18 +393,21 @@ export default function ChatListScreen({ navigation }: any) {
         setLoading(true);
         setError(null);
         
-        // Load chats
-        const items = await chatService.list();
+        // TODO: Connect to Firebase backend
+        console.log('TODO: Load chat list from Firebase');
+        
+        // Mock: Empty chat list
+        const items: any[] = [];
         if (!mounted) return;
         
-        const mapped: Chat[] = items.map((c) => ({
+        const mapped: Chat[] = items.map((c: any) => ({
           id: c.id,
           name: c.name,
           avatar: c.avatar,
           lastMessage: c.lastMessageText || '',
           timestamp: formatTimestamp(c.lastMessageAt),
           unreadCount: c.unreadCount || 0,
-          isOnline: (c.participants || []).some(p => p.isOnline),
+          isOnline: (c.participants || []).some((p: any) => p.isOnline),
           isTyping: false,
           type: c.type,
           isPinned: c.isPinned,
@@ -503,8 +506,10 @@ export default function ChatListScreen({ navigation }: any) {
           // Chat updated
           socketService.on('chat:updated', async (data: any) => {
             try {
-              const updated = await chatService.get(data.chatId);
-              setChats(prev => upsertChat(prev, updated));
+              // TODO: Connect to Firebase backend
+              console.log('TODO: Refresh chat summary from Firebase:', data.chatId);
+              
+              // Mock: Skip update
             } catch (error) {
               console.error('Failed to fetch updated chat:', error);
             }

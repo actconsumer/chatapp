@@ -1,6 +1,6 @@
 /**
  * Chat Service (UI facing abstraction)
- * Aligns frontend chat flows with Azure-backed REST endpoints.
+ * Aligns frontend chat flows with Firebase-backed REST endpoints.
  */
 import axios from 'axios';
 import { buildApiUrl, API_ENDPOINTS } from './config';

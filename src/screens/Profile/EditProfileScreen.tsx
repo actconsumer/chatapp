@@ -17,8 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
-import { blobStorageService } from '../../services/blobStorage.service';
-import { userService, UpdateProfileRequest } from '../../services/user.service';
+import { UpdateProfileRequest } from '../../services/user.service';
 import { socketService } from '../../services/socket.service';
 import * as ImagePicker from 'expo-image-picker';
 
@@ -68,11 +67,11 @@ export default function EditProfileScreen({ navigation }: EditProfileScreenProps
       if (!result.canceled && result.assets[0]) {
         setIsUploadingPhoto(true);
         try {
-          // Upload to Azure Blob Storage
-          const avatarUrl = await blobStorageService.uploadProfilePhoto(
-            result.assets[0].uri,
-            result.assets[0].fileName || 'profile.jpg'
-          );
+          // TODO: Connect to Firebase Storage backend
+          console.log('TODO: Upload profile photo to Firebase Storage:', result.assets[0].uri);
+          
+          // Mock: Use local URI directly
+          const avatarUrl = result.assets[0].uri;
           
           setProfilePhoto(avatarUrl);
           Alert.alert('Success', 'Photo uploaded successfully');
@@ -121,8 +120,15 @@ export default function EditProfileScreen({ navigation }: EditProfileScreenProps
         updateData.phoneNumber = phoneNumber.trim();
       }
 
-      // Update profile via API
-      const updatedProfile = await userService.updateProfile(updateData);
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Update user profile in Firebase:', updateData);
+      
+      // Mock: Create updated profile object
+      const updatedProfile = {
+        ...user,
+        ...updateData,
+        avatar: profilePhoto,
+      } as any;
 
       // If photo was changed, update avatar separately
       if (profilePhoto && profilePhoto !== user?.avatar) {

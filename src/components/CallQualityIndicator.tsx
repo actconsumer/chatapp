@@ -21,8 +21,15 @@ export const CallQualityIndicator: React.FC<CallQualityIndicatorProps> = ({
 
     const fetchQuality = async () => {
       try {
-        const data = await callService.getCallQuality(callId);
-        setQuality(data);
+        // TODO: Connect to Firebase backend
+        const mockData: CallQuality = {
+          networkQuality: 'good',
+          bandwidth: 0,
+          latency: 0,
+          packetLoss: 0,
+          jitter: 0
+        };
+        setQuality(mockData);
       } catch (error) {
         console.error('Failed to fetch call quality:', error);
       }

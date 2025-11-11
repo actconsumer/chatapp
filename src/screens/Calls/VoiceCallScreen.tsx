@@ -13,7 +13,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAudioPlayer } from 'expo-audio';
 import { callService, CallSettings } from '../../services/call.service';
-import { applyAcsVoiceProcessing, disposeAcsResources } from '../../services/acsAudioManager';
+// Removed Azure ACS audio manager import
 import { socketService } from '../../services/socket.service';
 import { useAuth } from '../../context/AuthContext';
 
@@ -57,9 +57,17 @@ export default function VoiceCallScreen({ route, navigation }: VoiceCallScreenPr
 
   const loadCallSettings = async () => {
     try {
-      const settings = await callService.getCallSettings();
-      setCallSettings(settings);
-      await applyAudioSettings(settings);
+      // TODO: Connect to Firebase backend
+      // Temporary mock settings for frontend state
+      const mockSettings: CallSettings = {
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true,
+        videoBitrate: 1500,
+        preferredResolution: '720p'
+      };
+      setCallSettings(mockSettings);
+      await applyAudioSettings(mockSettings);
     } catch (error) {
       console.error('Failed to load call settings:', error);
     }
@@ -76,12 +84,13 @@ export default function VoiceCallScreen({ route, navigation }: VoiceCallScreenPr
     };
 
     try {
-      await applyAcsVoiceProcessing(settings);
+      // TODO: Apply audio processing with WebRTC directly after Firebase setup
+      console.log('Audio processing will be implemented with WebRTC');
     } catch (error) {
-      console.warn('Failed to apply ACS audio processing', error);
+      console.warn('Failed to apply audio processing', error);
     }
 
-    // In a real implementation with WebRTC or ACS:
+    // In a real implementation with WebRTC:
     // navigator.mediaDevices.getUserMedia({
     //   audio: audioConstraints,
     //   video: false
@@ -99,9 +108,10 @@ export default function VoiceCallScreen({ route, navigation }: VoiceCallScreenPr
         setCallStatus('connecting');
         // Connect socket if needed
         if (!socketService.isConnected()) await socketService.connect();
+        // TODO: Connect to Firebase backend
         // Initiate via API (placeholder offer object)
         const offer = { sdp: 'placeholder', type: 'offer' };
-        await callService.initiateCall({ receiverId: chatId, type: 'voice', offer });
+        console.log('Initiate call:', { receiverId: chatId, type: 'voice', offer });
         if (canceled) return;
         setCallStatus('ringing');
         // Listen for answer signal
@@ -138,7 +148,8 @@ export default function VoiceCallScreen({ route, navigation }: VoiceCallScreenPr
 
   useEffect(() => {
     return () => {
-      disposeAcsResources().catch(() => {});
+      // TODO: Cleanup WebRTC resources after Firebase setup
+      console.log('Cleanup will be implemented with WebRTC');
     };
   }, []);
 
@@ -217,20 +228,22 @@ export default function VoiceCallScreen({ route, navigation }: VoiceCallScreenPr
         unavailablePlayer.play();
         // Wait a bit for sound to play before going back
         setTimeout(() => {
-          disposeAcsResources().catch(() => {});
+          // TODO: Cleanup WebRTC resources after Firebase setup
           navigation.goBack();
         }, 1500);
       } catch (error) {
         console.error('Failed to play unavailable sound', error);
-        disposeAcsResources().catch(() => {});
+        // TODO: Cleanup WebRTC resources after Firebase setup
         navigation.goBack();
       }
     } else {
       try {
-        await callService.endCall(chatId);
+        // TODO: Connect to Firebase backend
+        console.log('End call:', chatId);
       } catch {}
       try {
-        await disposeAcsResources();
+        // TODO: Cleanup WebRTC resources after Firebase setup
+        console.log('Cleanup will be implemented with WebRTC');
       } catch {}
       navigation.goBack();
     }

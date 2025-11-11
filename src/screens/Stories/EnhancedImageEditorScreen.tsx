@@ -23,8 +23,6 @@ import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from 'react-i18next';
 import { SIZES } from '../../utils/constants';
 import StoryHeader from './components/StoryHeader';
-import { blobStorageService } from '../../services/blobStorage.service';
-import { storyService } from '../../services/story.service';
 
 const { width, height } = Dimensions.get('window');
 
@@ -313,16 +311,19 @@ export default function EnhancedImageEditorScreen({ navigation, route }: Enhance
 
       // If we have an actual image/video, upload it first
       if (finalMediaUri && finalMediaType !== 'text') {
-        const fileName = `story-${Date.now()}.jpg`;
-        const mediaUrl = await blobStorageService.uploadStoryMedia(finalMediaUri, fileName);
+        // TODO: Connect to Firebase Storage backend
+        console.log('TODO: Upload story media to Firebase Storage:', finalMediaUri);
+        
+        // Mock: Use local URI
+        const mediaUrl = finalMediaUri;
         storyData.mediaUrl = mediaUrl;
       } else {
         // For text stories, use gradient info
         storyData.mediaUrl = selectedGradient.colors[0];
       }
 
-      // Create the story
-      await storyService.create(storyData);
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Create story in Firebase:', storyData);
 
       setIsPublishing(false);
       Alert.alert(

@@ -42,7 +42,21 @@ export default function ContactProfileScreen({ navigation, route }: ContactProfi
 
     try {
       setLoading(true);
-      const summary = await chatService.get(chatId);
+      
+      // TODO: Connect to Firebase backend
+      console.log('TODO: Fetch chat summary from Firebase:', chatId);
+      
+      // Mock: Return basic chat summary
+      const summary: ChatSummary = {
+        id: chatId,
+        type: 'direct',
+        name: 'Contact',
+        participants: [],
+        lastMessage: null,
+        unreadCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      } as any;
       setChatSummary(summary);
       setErrorMessage(null);
     } catch (error: any) {

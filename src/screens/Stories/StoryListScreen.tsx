@@ -65,13 +65,18 @@ export default function StoryListScreen({ navigation }: StoryListScreenProps) {
       try {
         setLoading(true);
         setError(null);
-        const [mine, list] = await Promise.all([
-          storyService.myStories().catch(() => []),
-          storyService.list().catch(() => []),
-        ]);
+        
+        // TODO: Connect to Firebase backend
+        console.log('TODO: Load stories from Firebase');
+        
+        // Mock: Return empty arrays for now
+        const mine: ApiStory[] = [];
+        const list: ApiStory[] = [];
+        
         if (!mounted) return;
         setMyStories(mine.map(mapStory));
         setStories(list.map(mapStory));
+        
         try {
           if (!socketService.isConnected()) await socketService.connect();
           socketService.on('story:new', (data: any) => {
@@ -91,7 +96,9 @@ export default function StoryListScreen({ navigation }: StoryListScreenProps) {
             // Show in-app notification
             showStoryNotification(data.userName, data.userAvatar);
           });
-        } catch {}
+        } catch (socketError) {
+          console.log('Socket connection skipped:', socketError);
+        }
       } catch (e: any) {
         if (!mounted) return;
         setError(e.message || 'Failed to load stories');

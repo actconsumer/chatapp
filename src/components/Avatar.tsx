@@ -56,9 +56,10 @@ export default function Avatar({
 
     try {
       setLoading(true);
-      const user = await userService.getUser(userId);
-      if (user.avatar) {
-        setAvatarUri(user.avatar);
+      // TODO: Connect to Firebase backend
+      const mockUser = { avatar: null };
+      if (mockUser.avatar) {
+        setAvatarUri(mockUser.avatar);
       }
     } catch (error) {
       console.error('Failed to load user avatar:', error);

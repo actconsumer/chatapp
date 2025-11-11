@@ -45,8 +45,9 @@ export default function StoryCircle({
   const loadUserStories = async () => {
     try {
       setLoading(true);
-      const userStories = await storyService.getUserStories(userId);
-      setStories(userStories);
+      // TODO: Connect to Firebase backend
+      const mockStories: any[] = [];
+      setStories(mockStories);
     } catch (error) {
       console.error('Failed to load user stories:', error);
     } finally {

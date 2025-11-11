@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Image } from 'react-native';
+import React, { useCallback, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { SIZES } from '../../utils/constants';
+import { userService, UserProfile } from '../../services/user.service';
 
 interface ProfileScreenProps {
   navigation: any;
@@ -13,9 +25,13 @@ interface ProfileScreenProps {
 
 export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   const { theme, isDark, setThemeMode, themeMode } = useTheme();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const { t, i18n } = useTranslation();
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
 
   const getLanguageDisplayName = () => {
     return i18n.language === 'ne' ? 'नेपाली (Nepali)' : 'English';
@@ -34,6 +50,72 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       setThemeMode('light');
     }
   };
+
+  const fetchProfile = useCallback(
+    async ({ showSpinner = true }: { showSpinner?: boolean } = {}) => {
+      if (showSpinner) {
+        setLoadingProfile(true);
+      } else {
+        setRefreshing(true);
+      }
+
+      try {
+        setProfileError(null);
+        
+        // TODO: Connect to Firebase backend
+        console.log('TODO: Fetch user profile from Firebase');
+        
+        // Mock: Use current user data
+        const data = user as any;
+        setProfile(data);
+      } catch (error: any) {
+        const message = error?.message || t('common.error');
+        setProfileError(message);
+      } finally {
+        if (showSpinner) {
+          setLoadingProfile(false);
+        } else {
+          setRefreshing(false);
+        }
+      }
+    },
+    [user, t]
+  );
+
+  const handleRefresh = useCallback(() => {
+    fetchProfile({ showSpinner: false });
+  }, [fetchProfile]);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isActive = true;
+
+      const load = async () => {
+        const showSpinner = !hasFetchedRef.current;
+        await fetchProfile({ showSpinner });
+        if (isActive) {
+          hasFetchedRef.current = true;
+        }
+      };
+
+      load();
+
+      return () => {
+        isActive = false;
+      };
+    }, [fetchProfile])
+  );
+
+  const displayName = profile?.displayName ?? user?.displayName ?? '';
+  const username = profile?.username ?? user?.username ?? '';
+  const email = profile?.email ?? user?.email ?? '';
+  const avatar = profile?.avatar ?? user?.avatar;
+  const bio = profile?.bio ?? '';
+  const phoneNumber = profile?.phoneNumber ?? '';
+  const emailVerified = profile?.isEmailVerified ?? !!user?.isEmailVerified;
+  const languageDisplay = getLanguageDisplayName();
+  const initial = (displayName || username || 'U').charAt(0).toUpperCase();
+  const emailStatusColor = emailVerified ? theme.success : theme.error;
 
   const changeProfilePicture = () => {
     Alert.alert(
@@ -55,9 +137,11 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
           },
         },
         {
-          text: 'Remove Photo',
+          text: t('profile.removePhoto'),
           style: 'destructive',
-          onPress: () => setProfileImage(null),
+          onPress: () => {
+            Alert.alert(t('common.info'), t('common.featureComingSoon'));
+          },
         },
         { text: 'Cancel', style: 'cancel' },
       ]
@@ -65,7 +149,16 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          tintColor={theme.primary}
+        />
+      }
+    >
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: theme.text }]}>{t('chat.profile')}</Text>
         <TouchableOpacity onPress={() => navigation.navigate('EditProfile')}>
@@ -73,12 +166,30 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
         </TouchableOpacity>
       </View>
 
+      {profileError && (
+        <TouchableOpacity
+          style={[styles.errorBanner, { backgroundColor: theme.surface, borderColor: theme.error }]}
+          onPress={() => fetchProfile({ showSpinner: true })}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="alert-circle" size={18} color={theme.error} />
+          <Text style={[styles.errorText, { color: theme.error }]}>{profileError}</Text>
+        </TouchableOpacity>
+      )}
+
+      {loadingProfile && !refreshing && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={theme.primary} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>{t('common.loading')}</Text>
+        </View>
+      )}
+
       {/* Profile Info */}
       <View style={styles.profileSection}>
         <TouchableOpacity onPress={changeProfilePicture} activeOpacity={0.7}>
           <View style={[styles.avatarLarge, { backgroundColor: theme.surface }]}>
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.avatarImage} />
+            {avatar ? (
+              <Image source={{ uri: avatar }} style={styles.avatarImage} />
             ) : (
               <LinearGradient
                 colors={theme.gradient}
@@ -86,9 +197,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Text style={styles.avatarText}>
-                  {user?.displayName?.charAt(0).toUpperCase() || 'U'}
-                </Text>
+                <Text style={styles.avatarText}>{initial}</Text>
               </LinearGradient>
             )}
             <View style={[styles.editBadge, { backgroundColor: theme.primary }]}>
@@ -96,9 +205,58 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             </View>
           </View>
         </TouchableOpacity>
-        <Text style={[styles.displayName, { color: theme.text }]}>{user?.displayName}</Text>
-        <Text style={[styles.username, { color: theme.textSecondary }]}>@{user?.username}</Text>
-        <Text style={[styles.email, { color: theme.textSecondary }]}>{user?.email}</Text>
+        <Text style={[styles.displayName, { color: theme.text }]}>{displayName || t('profile.name')}</Text>
+        {!!username && (
+          <Text style={[styles.username, { color: theme.textSecondary }]}>@{username}</Text>
+        )}
+        {!!email && (
+          <Text style={[styles.email, { color: theme.textSecondary }]}>{email}</Text>
+        )}
+      </View>
+
+      <View style={styles.section}>
+        {bio ? (
+          <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+            <Text style={[styles.infoCardTitle, { color: theme.textSecondary }]}>{t('profile.bio')}</Text>
+            <Text style={[styles.infoCardValue, { color: theme.text }]}>{bio}</Text>
+          </View>
+        ) : null}
+
+        <View style={[styles.infoCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.infoCardTitle, { color: theme.textSecondary }]}>{t('profile.contactInfo')}</Text>
+          <View style={styles.infoRow}>
+            <Ionicons name="mail-outline" size={18} color={theme.primary} style={styles.infoIcon} />
+            <View style={styles.infoContent}>
+              <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>{t('auth.email')}</Text>
+              <Text style={[styles.infoValue, { color: theme.text }]}>{email || '—'}</Text>
+              <View
+                style={[
+                  styles.statusPill,
+                  { borderColor: emailStatusColor, backgroundColor: theme.surface },
+                ]}
+              >
+                <Ionicons
+                  name={emailVerified ? 'checkmark-circle' : 'alert-circle'}
+                  size={14}
+                  color={emailStatusColor}
+                />
+                <Text style={[styles.statusPillText, { color: emailStatusColor }]}>
+                  {emailVerified ? 'Verified' : 'Not verified'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {phoneNumber ? (
+            <View style={styles.infoRow}>
+              <Ionicons name="call-outline" size={18} color={theme.primary} style={styles.infoIcon} />
+              <View style={styles.infoContent}>
+                <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>{t('profile.phone')}</Text>
+                <Text style={[styles.infoValue, { color: theme.text }]}>{phoneNumber}</Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
       </View>
 
       {/* Settings */}
@@ -221,7 +379,7 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
             <Text style={[styles.settingText, { color: theme.text }]}>{t('profile.language')}</Text>
           </View>
           <View style={styles.settingRight}>
-            <Text style={[styles.settingValue, { color: theme.textSecondary }]}>{getLanguageDisplayName()}</Text>
+            <Text style={[styles.settingValue, { color: theme.textSecondary }]}>{languageDisplay}</Text>
             <Ionicons name="chevron-forward" size={20} color={theme.textSecondary} />
           </View>
         </TouchableOpacity>
@@ -265,17 +423,6 @@ export default function ProfileScreen({ navigation }: ProfileScreenProps) {
       >
         <Ionicons name="log-out-outline" size={24} color={theme.error} />
         <Text style={[styles.logoutText, { color: theme.error }]}>{t('common.logout')}</Text>
-      </TouchableOpacity>
-
-      {/* Developer Navigation Button */}
-      <TouchableOpacity
-        style={[styles.devButton, { backgroundColor: theme.surface, borderColor: theme.primary }]}
-        onPress={() => navigation.navigate('DevNavigation')}
-      >
-        <Ionicons name="bug" size={20} color={theme.primary} />
-        <Text style={[styles.devButtonText, { color: theme.primary }]}>
-          Developer: Test All Screens
-        </Text>
       </TouchableOpacity>
 
       <View style={{ height: 40 }} />
@@ -360,6 +507,32 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     letterSpacing: 0.5,
   },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: SIZES.padding,
+    marginBottom: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  errorText: {
+    flex: 1,
+    fontSize: SIZES.small,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: SIZES.padding,
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontSize: SIZES.small,
+  },
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -396,6 +569,60 @@ const styles = StyleSheet.create({
     fontSize: SIZES.small,
     fontWeight: '500',
   },
+  infoCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 12,
+  },
+  infoCardTitle: {
+    fontSize: SIZES.tiny,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  infoCardValue: {
+    fontSize: SIZES.body,
+    lineHeight: 22,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+  },
+  infoIcon: {
+    paddingTop: 2,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: SIZES.tiny,
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  infoValue: {
+    fontSize: SIZES.body,
+    fontWeight: '500',
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    marginTop: 8,
+  },
+  statusPillText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -410,22 +637,5 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: SIZES.body,
     fontWeight: 'bold',
-  },
-  devButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    marginHorizontal: SIZES.padding,
-    marginTop: 16,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    gap: 8,
-  },
-  devButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

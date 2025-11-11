@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  TextInput,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
   ActivityIndicator,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -102,6 +101,9 @@ export default function LoginScreen({ navigation }: any) {
           <View style={styles.inputContainer}>
             <View
               style={[
+        
+        
+        
                 styles.input,
                 { backgroundColor: theme.inputBackground, borderColor: theme.border },
                 errors.email && { borderColor: theme.error },
@@ -256,17 +258,6 @@ export default function LoginScreen({ navigation }: any) {
             <Text style={[styles.signUpText, { color: theme.primary }]}>{t('common.signup')}</Text>
           </TouchableOpacity>
         </View>
-
-        {/* Developer Navigation Button */}
-        <TouchableOpacity
-          style={[styles.devButton, { backgroundColor: theme.surface, borderColor: theme.border }]}
-          onPress={() => navigation.navigate('DevNavigation')}
-        >
-          <Ionicons name="bug" size={18} color={theme.primary} />
-          <Text style={[styles.devButtonText, { color: theme.primary }]}>
-            Developer: Test All Screens
-          </Text>
-        </TouchableOpacity>
       </ScrollView>
 
       {/* Bot Prevention Modal */}
@@ -425,20 +416,5 @@ const styles = StyleSheet.create({
     fontSize: SIZES.body,
     fontWeight: 'bold',
   },
-  devButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    marginTop: 8,
-    gap: 8,
-  },
-  devButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
+
 });
